@@ -45,6 +45,16 @@ jobs:
         New-Item -Path ${{ runner.temp }}\scanner -ItemType Directory
         dotnet tool update dotnet-sonarscanner --tool-path ${{ runner.temp }}\scanner
 
+    - name: Subir infraestrutura com Docker Compose
+      run: docker-compose -f docker-compose.dev.yml up -d
+
+    - name: Esperar SQL Server iniciar
+      run: timeout /t 20
+
+    - name: Executar script SQL de inicialização
+      run: |
+        sqlcmd -S localhost -U sa -P MinhaSenha123! -i scripts/init.sql
+
     - name: Begin SonarCloud analysis
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
