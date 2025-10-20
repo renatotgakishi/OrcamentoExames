@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-OrcamentoMedico.Worker-2b5d1090-497a-4cf3-9a98-f92734c71263</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AWSSDK.SimpleEmail" Version="4.0.1.9" />
+    <PackageReference Include="AWSSDK.SQS" Version="4.0.1.11" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.9" />
+    <PackageReference Include="System.Text.Json" Version="9.0.10" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OrcamentoMedico.Domain\OrcamentoMedico.Domain.csproj" />
+    <ProjectReference Include="..\OrcamentoMedico.Application\OrcamentoMedico.Application.csproj" />
+  </ItemGroup>
+</Project>
