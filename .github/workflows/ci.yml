@@ -44,8 +44,9 @@ jobs:
         mkdir -p ${{ runner.temp }}/scanner
         dotnet tool update dotnet-sonarscanner --tool-path ${{ runner.temp }}/scanner
 
-    - name: Subir infraestrutura com Docker Compose
-      run: docker compose -f docker-compose.dev.yml up -d
+    - name: Subir infraestrutura com Docker Compose      
+      run: docker compose -f scripts/docker-compose.dev.yml up -d
+
 
     - name: Esperar SQL Server iniciar
       run: sleep 20
