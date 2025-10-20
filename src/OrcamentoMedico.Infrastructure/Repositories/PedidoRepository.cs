@@ -8,15 +8,23 @@ namespace OrcamentoMedico.Infrastructure.Repositories;
 
 public class PedidoRepository : IPedidoRepository
 {
+    
     private readonly AppDbContext _context;
-
-    public PedidoRepository(AppDbContext context)
+    private readonly IUsuarioRepository _usuarioRepository;
+    public PedidoRepository(AppDbContext context, IUsuarioRepository usuarioRepository)
     {
         _context = context;
+        _usuarioRepository = usuarioRepository;
     }
 
     public async Task SalvarAsync(PedidoCriadoEvent evento)
     {
+        var usuario = _usuarioRepository.ObterPorId(evento.IdUsuario);
+        if (usuario == null)
+        {
+            throw new InvalidOperationException($"Usuário com ID {evento.IdUsuario} não encontrado.");
+        }
+
         var pedido = new Pedido
         {
             Id = evento.PedidoId,
@@ -31,3 +39,4 @@ public class PedidoRepository : IPedidoRepository
         await _context.SaveChangesAsync();
     }
 }
+
