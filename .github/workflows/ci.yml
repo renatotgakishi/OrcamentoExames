@@ -99,6 +99,15 @@ jobs:
     - name: Rodar testes
       run: dotnet test tests/OrcamentoMedico.Tests/OrcamentoMedico.Tests.csproj --no-build --collect:"XPlat Code Coverage"
 
+    - name: Publicar a API
+      run: dotnet publish src/OrcamentoMedico.API/OrcamentoMedico.API.csproj -c Release -o ./publish
+
+    - name: Upload build como artefato
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-api
+        path: ./publish
+
     - name: End SonarCloud analysis
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
