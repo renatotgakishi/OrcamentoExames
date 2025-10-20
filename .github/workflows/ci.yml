@@ -61,9 +61,7 @@ jobs:
 
     - name: Executar script SQL de inicialização
       run: |
-        docker exec sqlserver_dev /opt/mssql-tools/bin/sqlcmd \
-          -S localhost -U sa -P MinhaSenha123! \
-          -i /scripts/init.sql
+        sqlcmd -S localhost -U sa -P MinhaSenha123! -i scripts/init.sql
 
     - name: Begin SonarCloud analysis
       env:

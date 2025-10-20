@@ -11,6 +11,7 @@ services:
       - "1433:1433"
     volumes:
       - sqlserver_data:/var/opt/mssql
+      - ./scripts:/scripts
 
   localstack:
     image: localstack/localstack:latest
