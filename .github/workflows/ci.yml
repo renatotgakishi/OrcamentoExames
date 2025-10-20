@@ -103,7 +103,7 @@ jobs:
       run: dotnet publish src/OrcamentoMedico.API/OrcamentoMedico.API.csproj -c Release -o ./publish
 
     - name: Upload build como artefato
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: build-api
         path: ./publish
