@@ -36,8 +36,8 @@ services:
       - "8025:8025"
   app:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: scripts/Dockerfile
     container_name: orcamento_api
     ports:
       - "5135:80"
@@ -46,3 +46,4 @@ services:
 
 volumes:
   sqlserver_data:
+
