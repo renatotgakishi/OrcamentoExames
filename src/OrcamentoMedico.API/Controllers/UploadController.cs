@@ -1,10 +1,7 @@
-
-using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using OrcamentoMedico.Application.DTO;
 using OrcamentoMedico.Application.Interfaces;
-using OrcamentoMedico.Domain.DTO;
 using OrcamentoMedico.Domain.Events;
 
 namespace OrcamentoMedico.API.Controllers

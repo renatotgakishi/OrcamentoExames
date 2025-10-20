@@ -1,7 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace OrcamentoMedico.Domain.DTO
+namespace OrcamentoMedico.Application.DTO
 {
     public class PedidoRequest
     {

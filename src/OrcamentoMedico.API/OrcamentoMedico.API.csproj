@@ -16,6 +16,7 @@
     <ProjectReference Include="..\OrcamentoMedico.Application\OrcamentoMedico.Application.csproj" />
     <ProjectReference Include="..\OrcamentoMedico.Domain\OrcamentoMedico.Domain.csproj" />
     <ProjectReference Include="..\OrcamentoMedico.Infrastructure\OrcamentoMedico.Infrastructure.csproj" />
+    <ProjectReference Include="..\OrcamentoMedico.Auth\OrcamentoMedico.Auth.csproj" />
   </ItemGroup>
 
 </Project>

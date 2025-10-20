@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OrcamentoMedico.Domain.DTO;
 using OrcamentoMedico.Application.DTO;
 using OrcamentoMedico.Application.Interfaces;
 using OrcamentoMedico.Domain.Events;

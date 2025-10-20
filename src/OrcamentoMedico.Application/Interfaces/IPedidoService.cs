@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using OrcamentoMedico.Domain.DTO;
+using OrcamentoMedico.Application.DTO;
 
 namespace OrcamentoMedico.Application.Interfaces
 {

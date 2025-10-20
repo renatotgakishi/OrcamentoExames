@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using OrcamentoMedico.Application.Interfaces;
-using OrcamentoMedico.Domain.DTO;
+using OrcamentoMedico.Application.DTO;
 using OrcamentoMedico.Domain.Events;
 
 namespace OrcamentoMedico.Application.Services

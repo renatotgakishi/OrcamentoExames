@@ -9,86 +9,86 @@ using OrcamentoMedico.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using OrcamentoMedico.Infrastructure.Persistence;
 
-var builder = WebApplication.CreateBuilder(args);
-
-//builder.Services.AddDbContext<AppDbContext>(options =>
- //   options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-
-// 🔧 Serviços da aplicação
-builder.Services.AddControllers();
-builder.Services.AddScoped<IS3Service, S3Service>();
-builder.Services.AddScoped<ISqsService, SqsService>();
-builder.Services.AddScoped<IPedidoService, PedidoService>();
-builder.Services.AddScoped<IPedidoRepository, PedidoRepository>();
-builder.Services.AddScoped<IEmailService, EmailService>();
-
-// 🔍 Swagger/OpenAPI
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-builder.Services.AddSwaggerGen(c =>
+public class Program
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "OrcamentoMedico.API", Version = "v1" });
-
-    // 🔐 Configuração para usar Bearer Token
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    public static void Main(string[] args)
     {
-        Description = "Insira o token JWT no campo abaixo. Exemplo: Bearer {seu_token}",
-        Name = "Authorization",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
-    });
+        var builder = WebApplication.CreateBuilder(args);
 
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
+        // Configuração do banco
+        builder.Services.AddDbContext<AppDbContext>(options =>
+            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+        // Serviços da aplicação
+        builder.Services.AddControllers().AddApplicationPart(typeof(OrcamentoMedico.Auth.Controllers.AuthController).Assembly);
+        builder.Services.AddScoped<IS3Service, S3Service>();
+        builder.Services.AddScoped<ISqsService, SqsService>();
+        builder.Services.AddScoped<IPedidoService, PedidoService>();
+        builder.Services.AddScoped<IPedidoRepository, PedidoRepository>();
+        builder.Services.AddScoped<IEmailService, EmailService>();
+
+        builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+
+        // Swagger/OpenAPI
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen(c =>
         {
-            new OpenApiSecurityScheme
+            c.SwaggerDoc("v1", new OpenApiInfo { Title = "OrcamentoMedico.API", Version = "v1" });
+
+            c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
-                Reference = new OpenApiReference
+                Description = "Insira o token JWT no campo abaixo. Exemplo: Bearer {seu_token}",
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.ApiKey,
+                Scheme = "Bearer"
+            });
+
+            c.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
                 {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    new string[] {}
                 }
-            },
-            new string[] {}
-        }
-    });
-});
+            });
+        });
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
+        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = "orcamento-medico",
+                    ValidAudience = "orcamento-medico-client",
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes("minha-chave-super-secreta-de-32-caracteres"))
+                };
+            });
+
+        var app = builder.Build();
+
+        app.UseAuthentication();
+        app.UseAuthorization();
+
+        if (app.Environment.IsDevelopment())
         {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = "orcamento-medico",
-            ValidAudience = "orcamento-medico-client",
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes("minha-chave-super-secreta-de-32-caracteres"))
-        };
-    });
+            app.UseSwagger();
+            app.UseSwaggerUI();
+        }
 
-var app = builder.Build();
-
-
-app.UseAuthentication();
-app.UseAuthorization();
-
-
-// 🔧 Middleware
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
+        app.UseHttpsRedirection();
+        app.MapControllers();
+        app.Run();
+    }
 }
-
-app.UseHttpsRedirection();
-app.MapControllers();
-app.Run();

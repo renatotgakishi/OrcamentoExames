@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OrcamentoMedico.Application.Interfaces;
-using OrcamentoMedico.Domain.DTO;
+using OrcamentoMedico.Application.DTO;
 
 namespace OrcamentoMedico.API.Controllers
 {

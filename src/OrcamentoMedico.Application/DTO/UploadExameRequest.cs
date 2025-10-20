@@ -2,7 +2,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http;
 
-namespace OrcamentoMedico.Domain.DTO
+namespace OrcamentoMedico.Application.DTO
 {
     public class UploadExameRequest
     {
