@@ -9,7 +9,7 @@ on:
 jobs:
   build-and-test:
     name: Build, Test and Analyze
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
     - name: Set up JDK 17 (SonarCloud requirement)
@@ -26,7 +26,7 @@ jobs:
     - name: Cache SonarCloud packages
       uses: actions/cache@v4
       with:
-        path: ~\sonar\cache
+        path: ~/.sonar/cache
         key: ${{ runner.os }}-sonar
         restore-keys: ${{ runner.os }}-sonar
 
@@ -34,33 +34,36 @@ jobs:
       id: cache-sonar-scanner
       uses: actions/cache@v4
       with:
-        path: ${{ runner.temp }}\scanner
+        path: ${{ runner.temp }}/scanner
         key: ${{ runner.os }}-sonar-scanner
         restore-keys: ${{ runner.os }}-sonar-scanner
 
     - name: Install SonarCloud scanner
       if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
-      shell: powershell
       run: |
-        New-Item -Path ${{ runner.temp }}\scanner -ItemType Directory
-        dotnet tool update dotnet-sonarscanner --tool-path ${{ runner.temp }}\scanner
+        mkdir -p ${{ runner.temp }}/scanner
+        dotnet tool update dotnet-sonarscanner --tool-path ${{ runner.temp }}/scanner
 
     - name: Subir infraestrutura com Docker Compose
       run: docker-compose -f docker-compose.dev.yml up -d
 
     - name: Esperar SQL Server iniciar
-      run: timeout /t 20
+      run: sleep 20
 
     - name: Executar script SQL de inicialização
       run: |
-        sqlcmd -S localhost -U sa -P MinhaSenha123! -i scripts/init.sql
+        docker exec sqlserver_dev /opt/mssql-tools/bin/sqlcmd \
+          -S localhost -U sa -P MinhaSenha123! \
+          -i /scripts/init.sql
 
     - name: Begin SonarCloud analysis
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      shell: powershell
       run: |
-        ${{ runner.temp }}\scanner\dotnet-sonarscanner begin /k:"renatotgakishi_OrcamentoExames" /o:"renatotgakishi" /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+        ${{ runner.temp }}/scanner/dotnet-sonarscanner begin \
+          /k:"renatotgakishi_OrcamentoExames" \
+          /o:"renatotgakishi" \
+          /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
     - name: Restaurar dependências
       run: dotnet restore
@@ -74,6 +77,6 @@ jobs:
     - name: End SonarCloud analysis
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      shell: powershell
       run: |
-        ${{ runner.temp }}\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+        ${{ runner.temp }}/scanner/dotnet-sonarscanner end \
+          /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
