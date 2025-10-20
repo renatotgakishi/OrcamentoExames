@@ -16,4 +16,11 @@
     <ProjectReference Include="..\OrcamentoMedico.Domain\OrcamentoMedico.Domain.csproj" />
   </ItemGroup>
 
+  <!-- Evita que appsettings.json seja copiado no publish -->
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
