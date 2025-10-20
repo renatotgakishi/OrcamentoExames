@@ -48,7 +48,15 @@ jobs:
       run: docker compose -f scripts/docker-compose.dev.yml up -d
 
     - name: Esperar SQL Server iniciar
-      run: sleep 20
+      run: |
+        echo "Aguardando SQL Server subir..."
+        for i in {1..10}; do
+          if docker logs sqlserver 2>&1 | grep -q "Recovery is complete"; then
+            echo "SQL Server está pronto"
+            break
+          fi
+          sleep 5
+        done
 
     - name: Instalar sqlcmd no runner
       run: |
@@ -63,6 +71,7 @@ jobs:
 
     - name: Verificar se a API está ativa
       run: |
+        echo "Verificando se a API está ativa..."
         for i in {1..10}; do
           if curl -s --head http://localhost:5135/swagger/index.html | grep "200 OK"; then
             echo "API está ativa"
@@ -71,7 +80,6 @@ jobs:
           echo "Aguardando API subir..."
           sleep 5
         done
-
 
     - name: Begin SonarCloud analysis
       env:
@@ -83,13 +91,13 @@ jobs:
           /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
     - name: Restaurar dependências
-      run: dotnet restore
+      run: dotnet restore src/OrcamentoMedico.API/OrcamentoMedico.API.csproj
 
-    - name: Build do projeto
-      run: dotnet build --no-restore
+    - name: Build da API
+      run: dotnet build src/OrcamentoMedico.API/OrcamentoMedico.API.csproj --no-restore
 
     - name: Rodar testes
-      run: dotnet test --no-build --collect:"XPlat Code Coverage"
+      run: dotnet test tests/OrcamentoMedico.Tests/OrcamentoMedico.Tests.csproj --no-build --collect:"XPlat Code Coverage"
 
     - name: End SonarCloud analysis
       env:
