@@ -61,6 +61,18 @@ jobs:
       run: |
         /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P MinhaSenha123! -i scripts/init.sql
 
+    - name: Verificar se a API está ativa
+      run: |
+        for i in {1..10}; do
+          if curl -s --head http://localhost:5135/swagger/index.html | grep "200 OK"; then
+            echo "API está ativa"
+            break
+          fi
+          echo "Aguardando API subir..."
+          sleep 5
+        done
+
+
     - name: Begin SonarCloud analysis
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
