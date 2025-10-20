@@ -8,16 +8,49 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
+    name: Build, Test and Analyze
+    runs-on: windows-latest
 
     steps:
-    - name: Checkout do código
-      uses: actions/checkout@v3
-
-    - name: Instalar .NET
-      uses: actions/setup-dotnet@v3
+    - name: Set up JDK 17 (SonarCloud requirement)
+      uses: actions/setup-java@v4
       with:
-        dotnet-version: '9.0.x'
+        java-version: 17
+        distribution: 'zulu'
+
+    - name: Checkout do código
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # necessário para SonarCloud
+
+    - name: Cache SonarCloud packages
+      uses: actions/cache@v4
+      with:
+        path: ~\sonar\cache
+        key: ${{ runner.os }}-sonar
+        restore-keys: ${{ runner.os }}-sonar
+
+    - name: Cache SonarCloud scanner
+      id: cache-sonar-scanner
+      uses: actions/cache@v4
+      with:
+        path: ${{ runner.temp }}\scanner
+        key: ${{ runner.os }}-sonar-scanner
+        restore-keys: ${{ runner.os }}-sonar-scanner
+
+    - name: Install SonarCloud scanner
+      if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
+      shell: powershell
+      run: |
+        New-Item -Path ${{ runner.temp }}\scanner -ItemType Directory
+        dotnet tool update dotnet-sonarscanner --tool-path ${{ runner.temp }}\scanner
+
+    - name: Begin SonarCloud analysis
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      shell: powershell
+      run: |
+        ${{ runner.temp }}\scanner\dotnet-sonarscanner begin /k:"renatotgakishi_OrcamentoExames" /o:"renatotgakishi" /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
     - name: Restaurar dependências
       run: dotnet restore
@@ -27,3 +60,10 @@ jobs:
 
     - name: Rodar testes
       run: dotnet test --no-build --collect:"XPlat Code Coverage"
+
+    - name: End SonarCloud analysis
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      shell: powershell
+      run: |
+        ${{ runner.temp }}\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
