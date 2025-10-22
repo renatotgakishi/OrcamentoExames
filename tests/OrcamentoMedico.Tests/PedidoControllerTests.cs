@@ -15,6 +15,7 @@ public class PedidoControllerTests : IClassFixture<WebApplicationFactory<Program
     {
         _client = factory.CreateClient();
     }
+
     private async Task<string> GerarTokenAsync()
     {
         var login = new
@@ -24,32 +25,23 @@ public class PedidoControllerTests : IClassFixture<WebApplicationFactory<Program
         };
 
         var loginJson = JsonConvert.SerializeObject(login);
-        Console.WriteLine("🔐 Enviando para /api/Auth/login:");
-        Console.WriteLine(loginJson);
-
         var content = new StringContent(loginJson, Encoding.UTF8, "application/json");
         var response = await _client.PostAsync("/api/Auth/login", content);
 
-        Console.WriteLine($"🔐 Status da resposta: {(int)response.StatusCode} {response.StatusCode}");
-
         var json = await response.Content.ReadAsStringAsync();
-        Console.WriteLine("🔐 Corpo da resposta:");
-        Console.WriteLine(json);
-
         response.EnsureSuccessStatusCode();
 
         var obj = JsonConvert.DeserializeObject<dynamic>(json);
-        var token = (string)obj.token;
-        Console.WriteLine("🔐 Token gerado:");
-        Console.WriteLine(token);
+        string token = obj.data?.token;
+
+        Assert.False(string.IsNullOrEmpty(token)); // Garante que o token foi gerado
 
         return token;
     }
 
     [Fact]
-    public async Task PostPedido_ComLogin_DeveRetornar200()
+    public async Task PostPedido_ComLogin_DeveRetornar201()
     {
-
         var token = await GerarTokenAsync();
 
         var pedido = new
@@ -60,21 +52,15 @@ public class PedidoControllerTests : IClassFixture<WebApplicationFactory<Program
         };
 
         var pedidoJson = JsonConvert.SerializeObject(pedido);
-        Console.WriteLine("📦 Enviando para /api/pedidos:");
-        Console.WriteLine(pedidoJson);
-
         var content = new StringContent(pedidoJson, Encoding.UTF8, "application/json");
+
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var response = await _client.PostAsync("/api/pedidos", content);
-        Console.WriteLine($"📦 Status da resposta: {(int)response.StatusCode} {response.StatusCode}");
-
         var responseBody = await response.Content.ReadAsStringAsync();
-        Console.WriteLine("📦 Corpo da resposta:");
-        Console.WriteLine(responseBody);
 
-        //Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        Assert.False(string.IsNullOrEmpty(responseBody)); // Garante que há resposta
     }
 
     [Fact]

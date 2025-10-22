@@ -41,17 +41,21 @@ namespace OrcamentoMedico.API.Controllers
             return Ok(new { idUsuario = usuario.Id });
         }
 
+        
         [HttpDelete("{id}")]
         public IActionResult Remover(Guid id)
         {
-            var usuario = _repository.ObterPorId(id);
-            if (usuario == null)
-                return NotFound();
+            
+            if (_repository.Remover(id))
+            {
+                return NoContent(); // Retorna 204
+            }
 
-            _repository.Remover(id);
-            return NoContent();
+            // Se _repository.Remover(id) retornar false, significa que não encontrou.
+            return NotFound(); // Retorna 404
         }
 
+        // ...
 
     }
 }

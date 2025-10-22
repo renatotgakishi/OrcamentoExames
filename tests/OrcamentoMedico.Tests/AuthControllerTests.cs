@@ -19,6 +19,7 @@ namespace OrcamentoMedico.Tests
         }
 
         [Fact]
+        
         public async Task Login_ComCredenciaisValidas_DeveRetornarToken()
         {
             var login = new
@@ -35,9 +36,9 @@ namespace OrcamentoMedico.Tests
             var json = await response.Content.ReadAsStringAsync();
             var obj = JsonConvert.DeserializeObject<dynamic>(json);
 
-            Assert.False(string.IsNullOrEmpty((string)obj.token));
+            string token = obj.data?.token;
+            Assert.False(string.IsNullOrEmpty(token));
         }
-
         [Fact]
         public async Task Login_ComCredenciaisInvalidas_DeveRetornar401()
         {

@@ -40,7 +40,7 @@ services:
       dockerfile: scripts/Dockerfile
     container_name: orcamento_api
     ports:
-      - "5135:80"
+      - "5136:80"
     depends_on:
       - sqlserver
 

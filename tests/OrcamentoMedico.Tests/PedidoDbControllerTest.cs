@@ -1,71 +1,21 @@
 using System.Net;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Newtonsoft.Json;
-using OrcamentoMedico.Tests.Helpers;
+using Xunit;
 
 namespace OrcamentoMedico.Tests
 {
-    public class PedidoControllerTests : IClassFixture<WebApplicationFactory<Program>>
+    public class PedidoDbControllerTests : IClassFixture<WebApplicationFactory<Program>>
     {
         private readonly HttpClient _client;
 
-        public PedidoControllerTests(WebApplicationFactory<Program> factory)
+        public PedidoDbControllerTests(WebApplicationFactory<Program> factory)
         {
             _client = factory.CreateClient();
-        }
-
-        /*private async Task<string> CriarUsuarioAsync()
-        {
-            var emailUnico = $"renato_{Guid.NewGuid()}@example.com";
-
-            var usuario = new
-            {
-                nome = "Renato",
-                email = emailUnico,
-                senha = "123456"
-            };
-
-            var content = new StringContent(JsonConvert.SerializeObject(usuario), Encoding.UTF8, "application/json");
-            var response = await _client.PostAsync("/api/usuarios", content);
-            response.EnsureSuccessStatusCode();
-            Console.WriteLine(response.EnsureSuccessStatusCode());
-            Console.WriteLine("🔹 StatusCode do usuario retornado: " + response.StatusCode);
-
-
-            var json = await response.Content.ReadAsStringAsync();
-            var obj = JsonConvert.DeserializeObject<dynamic>(json);
-            return (string)obj.idUsuario;
-        }*/
-        private async Task<string> ObterOuCriarUsuarioAsync()
-        {
-            var email = "kishi@example.com";
-
-            // Tenta buscar o usuário existente
-            var response = await _client.GetAsync($"/api/usuarios/email/{email}");
-            if (response.IsSuccessStatusCode)
-            {
-                var json = await response.Content.ReadAsStringAsync();
-                var obj = JsonConvert.DeserializeObject<dynamic>(json);
-                return (string)obj.idUsuario;
-            }
-
-            // Se não existir, cria um novo
-            var usuario = new
-            {
-                nome = "kishi",
-                email = email,
-                senha = "123456"
-            };
-
-            var content = new StringContent(JsonConvert.SerializeObject(usuario), Encoding.UTF8, "application/json");
-            var createResponse = await _client.PostAsync("/api/usuarios", content);
-            createResponse.EnsureSuccessStatusCode();
-
-            var jsonNovo = await createResponse.Content.ReadAsStringAsync();
-            var objNovo = JsonConvert.DeserializeObject<dynamic>(jsonNovo);
-            return (string)objNovo.idUsuario;
         }
 
         private async Task<string> GerarTokenAsync()
@@ -76,61 +26,85 @@ namespace OrcamentoMedico.Tests
                 Senha = "123456"
             };
 
-            var loginJson = JsonConvert.SerializeObject(login);
-            Console.WriteLine("🔐 Enviando para /api/Auth/login:");
-            Console.WriteLine(loginJson);
-
-            var content = new StringContent(loginJson, Encoding.UTF8, "application/json");
+            var content = new StringContent(JsonConvert.SerializeObject(login), Encoding.UTF8, "application/json");
             var response = await _client.PostAsync("/api/Auth/login", content);
 
-            Console.WriteLine($"🔐 Status da resposta: {(int)response.StatusCode} {response.StatusCode}");
-
             var json = await response.Content.ReadAsStringAsync();
-            Console.WriteLine("🔐 Corpo da resposta:");
-            Console.WriteLine(json);
-
-            response.EnsureSuccessStatusCode();
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException($"Erro ao autenticar: {response.StatusCode}\n{json}");
+            }
 
             var obj = JsonConvert.DeserializeObject<dynamic>(json);
-            var token = (string)obj.token;
-            Console.WriteLine("🔐 Token gerado:");
-            Console.WriteLine(token);
-
+            string token = obj?.data?.token;
+            Assert.False(string.IsNullOrEmpty(token), "Token JWT não foi retornado.");
             return token;
         }
 
+        private async Task<string> ObterOuCriarUsuarioAsync()
+        {
+            var email = $"kishi_{Guid.NewGuid()}@example.com";
+
+            // Tenta buscar o usuário
+            var response = await _client.GetAsync($"/api/usuarios/email/{email}");
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                var obj = JsonConvert.DeserializeObject<dynamic>(json);
+                string id = obj?.data?.idUsuario;
+                Assert.False(string.IsNullOrEmpty(id), "ID do usuário existente não foi retornado.");
+                return id;
+            }
+
+            // Cria novo usuário
+            var usuario = new
+            {
+                nome = "kishi",
+                email = email,
+                senha = "123456"
+            };
+
+            var content = new StringContent(JsonConvert.SerializeObject(usuario), Encoding.UTF8, "application/json");
+            var createResponse = await _client.PostAsync("/api/usuarios", content);
+            var jsonNovo = await createResponse.Content.ReadAsStringAsync();
+
+            if (!createResponse.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException($"Erro ao criar usuário: {createResponse.StatusCode}\n{jsonNovo}");
+            }
+
+            var objNovo = JsonConvert.DeserializeObject<dynamic>(jsonNovo);
+            string idNovo = objNovo?.data?.idUsuario;
+            Assert.False(string.IsNullOrEmpty(idNovo), "ID do novo usuário não foi retornado.");
+            return idNovo;
+        }
 
         [Fact]
         public async Task PostPedidoDb_ComUsuarioCriado_DeveRetornar201()
         {
             var token = await GerarTokenAsync();
-            //var token = await AuthHelper.GerarTokenAsync(_client);
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             var idUsuario = await ObterOuCriarUsuarioAsync();
 
             var pedidoDb = new
             {
-                idUsuario = idUsuario, //"4C5D311D-C385-4274-892B-2CD0783DB9C1",
+                idUsuario,
                 imagemS3 = "string",
                 emailUsuario = "renato@example.com"
             };
 
-            var jsonPedido = JsonConvert.SerializeObject(pedidoDb);
-            Console.WriteLine("🔹 JSON enviado para /api/pedidos-db:");
-            Console.WriteLine(jsonPedido);
-
-            var content = new StringContent(jsonPedido, Encoding.UTF8, "application/json");
+            var content = new StringContent(JsonConvert.SerializeObject(pedidoDb), Encoding.UTF8, "application/json");
             var response = await _client.PostAsync("/api/pedidos-db", content);
-
-            Console.WriteLine("🔹 StatusCode retornado: " + response.StatusCode);
             var responseBody = await response.Content.ReadAsStringAsync();
-            Console.WriteLine("🔹 Corpo da resposta:");
-            Console.WriteLine(responseBody);
 
-
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException($"Erro ao criar pedido: {response.StatusCode}\n{responseBody}");
+            }
 
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+            Assert.False(string.IsNullOrEmpty(responseBody), "Resposta do pedido está vazia.");
         }
     }
 }
